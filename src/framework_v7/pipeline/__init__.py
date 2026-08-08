@@ -19,6 +19,7 @@ from . import (
     ipml,
     layer_extraction,
     layer_framework,
+    live_prediction,
     machine_learning,
     ml_preparation,
     modeling,
@@ -39,6 +40,7 @@ PIPELINE_MODULES = {
     "C15 - Evaluacion": evaluation,
     "C16 - Interpretacion": interpretation,
     "Diseno experimental": experiment_design,
+    "Prediccion live": live_prediction,
     "Utilidades": utils,
 }
 

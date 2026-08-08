@@ -12,6 +12,7 @@ from urllib.parse import quote
 
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
 import streamlit as st
 
 from .catalog import EXPERIMENT_DESIGN_FILES, FEATURE_GROUPS, LAYER_CATALOG, MASTER_FILES, SUPPORT_FILES
@@ -24,6 +25,7 @@ from .paths import (
     EXPERIMENT_DESIGN_DIR,
     INTERPRETATION_DIR,
     MACHINE_LEARNING_DIR,
+    MASTER_PATH,
     ML_DATASET_PATH,
     MODEL_ACCURACY_IMAGE_PATH,
     MODEL_CARDS_DIR,
@@ -46,6 +48,15 @@ from .pipeline.interpretation import (
     interpretation_artifact_inventory,
     load_interpretation_summary,
     summarize_interpretation_experiments,
+)
+from .pipeline.live_prediction import (
+    IRCA_TARGET_LABEL,
+    available_live_targets,
+    feature_influence,
+    feature_profile,
+    fit_live_ridge_model,
+    irca_risk_label,
+    predict_live,
 )
 from .pipeline.machine_learning import (
     load_sequence_metadata,
@@ -216,6 +227,7 @@ def render_sidebar(data: ProjectData) -> str:
             [
                 "Dashboard",
                 "Experimentos",
+                "Prediccion live",
                 "Diseno experimental",
                 "Datasets por capas",
                 "Dataset maestro",
@@ -699,6 +711,251 @@ def render_experiment(data: ProjectData) -> None:
         if not data.diagnostic.empty:
             st.markdown("**Diagnostico estadistico**")
             st.dataframe(data.diagnostic, use_container_width=True, hide_index=True)
+
+
+def _format_live_value(value: float, unit: str) -> str:
+    """Format live predictions for compact UI metrics.
+
+    Args:
+        value: Numeric prediction.
+        unit: Target unit.
+
+    Returns:
+        Human-readable prediction label.
+    """
+
+    if unit == "m3":
+        return f"{value:,.0f} {unit}"
+    return f"{value:,.2f} {unit}"
+
+
+def _slider_step(minimum: float, maximum: float) -> float:
+    """Choose a practical step for Streamlit numeric controls.
+
+    Args:
+        minimum: Observed minimum.
+        maximum: Observed maximum.
+
+    Returns:
+        Positive step size.
+    """
+
+    span = abs(maximum - minimum)
+    if span == 0:
+        return 1.0
+    if span >= 1_000_000:
+        return max(1.0, round(span / 100))
+    if span >= 100:
+        return 1.0
+    if span >= 10:
+        return 0.1
+    return 0.01
+
+
+def render_live_prediction(data: ProjectData) -> None:
+    """Render the interactive live prediction simulator.
+
+    Args:
+        data: Loaded project datasets and metadata.
+
+    Returns:
+        None.
+    """
+
+    st.subheader("Prediccion live")
+    if data.master.empty:
+        render_missing_file(MASTER_PATH)
+        return
+
+    available_targets = available_live_targets(data.master)
+    if not available_targets:
+        st.warning("No hay variables objetivo suficientes para entrenar el simulador live.")
+        return
+
+    selected_target = st.selectbox("Variable objetivo", available_targets)
+    try:
+        model = fit_live_ridge_model(data.master, selected_target)
+    except ValueError as error:
+        st.error(str(error))
+        return
+
+    st.caption(model.target.description)
+    metrics = model.metrics
+    c1, c2, c3, c4 = st.columns(4)
+    c1.metric("Filas entrenamiento", f"{int(metrics['filas_entrenamiento']):,}")
+    c2.metric("Filas validacion", f"{int(metrics['filas_validacion']):,}")
+    c3.metric("MAE validacion", f"{metrics['mae_validacion']:,.3f}")
+    c4.metric("R2 validacion", f"{metrics['r2_validacion']:,.3f}")
+
+    profile = feature_profile(data.master, model.features)
+    if profile.empty:
+        st.warning("No fue posible perfilar variables predictoras para el simulador.")
+        return
+
+    tab_manual, tab_explain, tab_batch = st.tabs(
+        ["Simulador manual", "Explicabilidad", "Carga CSV/Excel"]
+    )
+
+    with tab_manual:
+        st.markdown("**Escenario multicapa**")
+        input_values = {}
+        for group in profile["Capa"].drop_duplicates().tolist():
+            group_profile = profile[profile["Capa"] == group]
+            with st.expander(group, expanded=group in ["Clima y variabilidad", "Calidad y percepcion"]):
+                columns = st.columns(2)
+                for index, row in enumerate(group_profile.itertuples(index=False)):
+                    minimum = float(row.Min)
+                    maximum = float(row.Max)
+                    default = float(row.Mediana)
+                    step = _slider_step(minimum, maximum)
+                    with columns[index % 2]:
+                        if maximum - minimum > 10_000_000:
+                            value = st.number_input(
+                                row.Variable,
+                                min_value=minimum,
+                                max_value=maximum,
+                                value=default,
+                                step=step,
+                                key=f"live_input_{selected_target}_{row.Variable}",
+                            )
+                        else:
+                            value = st.slider(
+                                row.Variable,
+                                min_value=minimum,
+                                max_value=maximum,
+                                value=default,
+                                step=step,
+                                key=f"live_input_{selected_target}_{row.Variable}",
+                            )
+                        input_values[row.Variable] = float(value)
+
+        prediction = predict_live(model, input_values)
+        observed_target = pd.to_numeric(data.master[model.target.column], errors="coerce").dropna()
+        reference = float(observed_target.median()) if not observed_target.empty else prediction
+        delta = prediction - reference
+
+        result_col, chart_col = st.columns([1, 2])
+        with result_col:
+            st.metric(
+                "Prediccion del escenario",
+                _format_live_value(prediction, model.target.unit),
+                delta=_format_live_value(delta, model.target.unit),
+            )
+            if selected_target == IRCA_TARGET_LABEL:
+                st.metric("Nivel de riesgo estimado", irca_risk_label(prediction))
+            else:
+                st.caption("Delta calculado contra la mediana historica del objetivo.")
+
+        with chart_col:
+            scenarios = pd.DataFrame(
+                [
+                    {
+                        "Escenario": "Mediana historica",
+                        "Prediccion": predict_live(model, model.defaults.to_dict()),
+                    },
+                    {"Escenario": "Escenario editado", "Prediccion": prediction},
+                ]
+            )
+            fig = px.bar(
+                scenarios,
+                x="Escenario",
+                y="Prediccion",
+                color="Escenario",
+                text_auto=".2s",
+                title="Comparacion de escenario live",
+            )
+            fig.update_layout(height=360, margin=dict(l=10, r=10, t=55, b=10), showlegend=False)
+            st.plotly_chart(fig, use_container_width=True)
+
+        if selected_target == IRCA_TARGET_LABEL:
+            gauge = go.Figure(
+                go.Indicator(
+                    mode="gauge+number",
+                    value=max(0.0, prediction),
+                    title={"text": "IRCA estimado"},
+                    gauge={
+                        "axis": {"range": [0, 100]},
+                        "bar": {"color": "#2563EB"},
+                        "steps": [
+                            {"range": [0, 5], "color": "#DCFCE7"},
+                            {"range": [5, 14], "color": "#FEF9C3"},
+                            {"range": [14, 35], "color": "#FED7AA"},
+                            {"range": [35, 80], "color": "#FECACA"},
+                            {"range": [80, 100], "color": "#E5E7EB"},
+                        ],
+                    },
+                )
+            )
+            gauge.update_layout(height=300, margin=dict(l=10, r=10, t=40, b=10))
+            st.plotly_chart(gauge, use_container_width=True)
+
+    with tab_explain:
+        st.markdown("**Variables con mayor influencia estandarizada**")
+        influence = feature_influence(model, top_n=12)
+        if influence.empty:
+            st.info("No hay coeficientes disponibles para explicar el baseline.")
+        else:
+            fig = px.bar(
+                influence.sort_values("Coeficiente"),
+                x="Coeficiente",
+                y="Variable",
+                color="Capa",
+                orientation="h",
+                title="Coeficientes del baseline live",
+            )
+            fig.update_layout(height=520, margin=dict(l=10, r=10, t=55, b=10))
+            st.plotly_chart(fig, use_container_width=True)
+            st.dataframe(influence, use_container_width=True, hide_index=True)
+            st.caption(
+                "Los coeficientes son estandarizados: valores positivos aumentan "
+                "la prediccion y valores negativos la reducen, manteniendo el "
+                "resto de variables constantes."
+            )
+
+    with tab_batch:
+        st.markdown("**Prediccion por archivo**")
+        uploaded_file = st.file_uploader(
+            "Carga un CSV o Excel con columnas compatibles",
+            type=["csv", "xlsx"],
+            key=f"live_upload_{selected_target}",
+        )
+        if uploaded_file is None:
+            st.dataframe(
+                profile[["Variable", "Capa", "Mediana", "Min", "Max"]],
+                use_container_width=True,
+                hide_index=True,
+            )
+        else:
+            try:
+                if uploaded_file.name.lower().endswith(".xlsx"):
+                    upload_df = pd.read_excel(uploaded_file)
+                else:
+                    upload_df = pd.read_csv(uploaded_file)
+            except Exception as error:  # pragma: no cover - UI guardrail
+                st.error(f"No fue posible leer el archivo: {error}")
+                return
+
+            scoring_df = upload_df.copy()
+            for feature in model.features:
+                if feature not in scoring_df.columns:
+                    scoring_df[feature] = model.defaults[feature]
+            predictions = scoring_df[model.features].apply(
+                lambda row: predict_live(model, row.to_dict()),
+                axis=1,
+            )
+            result = upload_df.copy()
+            result[f"Prediccion_{model.target.column}"] = predictions
+            if selected_target == IRCA_TARGET_LABEL:
+                result["Riesgo_estimado"] = predictions.apply(irca_risk_label)
+            st.success(f"Predicciones generadas: {len(result):,}")
+            st.dataframe(result, use_container_width=True, hide_index=True)
+            st.download_button(
+                "Descargar predicciones",
+                data=result.to_csv(index=False).encode("utf-8"),
+                file_name=f"predicciones_live_{model.target.column}.csv",
+                mime="text/csv",
+                key=f"download_live_predictions_{selected_target}",
+            )
 
 
 def render_experiment_design(data: ProjectData) -> None:

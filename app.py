@@ -17,6 +17,7 @@ from framework_v7.views import (
     render_experiment_design,
     render_experiments,
     render_layers,
+    render_live_prediction,
     render_master_dataset,
     render_notebooks,
     render_sidebar,
@@ -39,6 +40,8 @@ if section == "Dashboard":
     render_dashboard(data)
 elif section == "Experimentos":
     render_experiments(data)
+elif section == "Prediccion live":
+    render_live_prediction(data)
 elif section == "Diseno experimental":
     render_experiment_design(data)
 elif section == "Datasets por capas":
