@@ -1,37 +1,37 @@
 # FRAMEWORK V7
 
-Framework para la aplicacion de tecnologias 4.0 y ciencia de datos en la
-gestion hidrica del Rio Bogota. El repositorio organiza datos biofisicos,
-hidraulicos, climaticos, sociales e institucionales en un flujo multicapa para
-explorar informacion, disenar experimentos y evaluar modelos predictivos.
+FRAMEWORK V7 es una aplicacion de analitica hidrica para explorar datos
+multicapa del Rio Bogota, consultar resultados de modelos predictivos y simular
+escenarios de riesgo o disponibilidad de agua desde un tablero Streamlit.
 
-## Objetivo
+La solucion combina datos climaticos, hidrologicos, hidraulicos, calidad del
+agua, percepcion y gobernanza en una estructura reproducible con `DATA`, `src`,
+`NOTEBOOKS`, `main.py` y `app.py`.
 
-El proyecto convierte notebooks de investigacion en una base reproducible:
+## Que Incluye
 
-- `DATA`: datos de entrada, datos maestros, tensores, metricas y resultados.
-- `NOTEBOOKS`: memoria metodologica y trazabilidad de los colabs.
-- `src/framework_v7/layers`: funciones por capa del framework.
-- `src/framework_v7/pipeline`: funciones reutilizables extraidas de notebooks.
-- `main.py`: chequeo ligero de ejecucion por consola.
-- `app.py`: tablero Streamlit para visualizar resultados.
+- Dashboard Streamlit para explorar capas, datasets maestros y experimentos.
+- Simulador de prediccion live para `irca` y `VolumenUtilDiarioMasa`.
+- Vista de gobierno de modelos con trazabilidad, riesgos, controles y ciclo de
+  vida.
+- Pipeline modular en `src/framework_v7/pipeline`.
+- Modulos por capa en `src/framework_v7/layers`.
+- Artefactos versionados de datos, tensores, modelos, metricas y predicciones.
 
-## Anatomia Del Negocio
-
-El flujo sigue una anatomia por capas y etapas:
+## Flujo De Datos
 
 1. Las capas C01-C07 consolidan informacion climatica, hidrologica, calidad de
    agua, ONI, hidraulica, percepcion y gobernanza.
 2. C08-C09 integran las capas, preparan llaves `Fecha`/`Nodo`, imputan datos y
    generan el dataset maestro.
-3. C10-C12 documentan conocimiento de dominio, pertinencia para machine
+3. C10-C12 preparan catalogos de conocimiento, pertinencia para machine
    learning y seleccion de variables.
-4. C13 prepara datasets transformados y secuencias temporales.
-5. C14 entrena o registra modelos y tensores por experimento.
-6. C15 exporta predicciones y metadata de evaluacion.
-7. C16 interpreta resultados y traduce metricas en lectura sistemica.
-8. C17 documenta gobierno de modelos: versionamiento, trazabilidad, riesgos,
-   controles y uso seguro de los modelos.
+4. C13 genera datasets transformados y secuencias temporales.
+5. C14 registra tensores, modelos y salidas de entrenamiento.
+6. C15 consolida predicciones y metricas.
+7. C16 transforma resultados en lectura tecnica y sistemica.
+8. C17 organiza gobierno de modelos: versionamiento, trazabilidad, riesgos,
+   controles y uso seguro.
 
 ## Estructura
 
@@ -56,19 +56,38 @@ FRAMEWORK_V7/
 `-- requirements.txt
 ```
 
-## Pipeline Modular De Notebooks
+## Aplicacion Streamlit
 
-Los notebooks se conservan como evidencia, pero la logica reutilizable esta en
-`src/framework_v7/pipeline`. Esta separacion permite importar funciones desde
-Colab, scripts o pruebas sin repetir celdas largas.
+Ejecutar localmente:
 
-- `layer_extraction.py`: inventario, trazabilidad y resumen de calidad de los
-  notebooks C01-C07 y sus artefactos RAW/MASTER.
+```bash
+streamlit run app.py
+```
+
+Vistas principales:
+
+- `Dashboard`: resumen ejecutivo, mapa del sistema, predicciones y calidad de
+  datos.
+- `Experimentos`: resultados, model cards, metricas, predicciones e
+  interpretacion.
+- `Prediccion live`: simulador interactivo y carga de CSV/Excel para inferencia
+  exploratoria.
+- `Gobierno de modelos`: modelos gobernados, trazabilidad, riesgos, controles y
+  arquitectura.
+- `Diseno experimental`: catalogo, configuracion y estado de experimentos.
+- `Datasets por capas`: exploracion de fuentes por capa.
+- `Dataset maestro`: perfil, cobertura, series, nulos y tabla final.
+- `Notebooks`: inventario de workflows disponibles.
+
+## Pipeline Modular
+
+La logica reutilizable vive en `src/framework_v7/pipeline` para que la app,
+scripts y notebooks usen las mismas funciones.
+
+- `layer_extraction.py`: inventario y perfil de calidad de artefactos por capa.
 - `layer_framework.py`: gobierno del dato, hashes, metadata, diccionario,
-  auditoria, indicadores, EDA y exportacion para los notebooks
-  `FW7_C0X_Framework`.
-- `utils.py`: lectura, escritura, validacion, metadata e inventario de
-  artefactos.
+  auditoria, indicadores y exportacion de artefactos por capa.
+- `utils.py`: lectura, escritura, validacion, metadata e inventario.
 - `integration.py`: integracion C08 y llaves `Fecha`/`Nodo`.
 - `feature_engineering.py`: preparacion C09, temporalidad, imputacion y
   cobertura.
@@ -79,59 +98,26 @@ Colab, scripts o pruebas sin repetir celdas largas.
 - `modeling.py`: configuracion, tensores, registros y diagnosticos C14.
 - `evaluation.py`: metricas, predicciones y recomendaciones C15.
 - `interpretation.py`: resumenes, interpretacion y lectura sistemica C16.
-- `model_governance.py`: gobierno de modelos C17, trazabilidad, matriz de
-  riesgos y evidencia de ciclo de vida.
-- `experiment_design.py`: diseno experimental y plan de experimentos.
+- `model_governance.py`: gobierno de modelos C17, trazabilidad y matriz de
+  riesgos.
+- `experiment_design.py`: catalogo y configuracion de experimentos.
 - `main.py`: validacion ligera del pipeline modular.
 
-Ejemplo desde un notebook:
+Ejemplo:
 
 ```python
 from framework_v7.pipeline.machine_learning import summarize_ml_experiments
-from framework_v7.pipeline.interpretation import summarize_interpretation_experiments
+from framework_v7.pipeline.model_governance import governance_summary
 from framework_v7.pipeline.layer_framework import build_layer_framework_artifacts
-```
-
-### Modularizacion C01-C07
-
-Los notebooks de framework por capa conservan la trazabilidad metodologica, pero
-las funciones repetidas ahora viven en `layer_framework.py`:
-
-- `generate_record_hash`: reemplaza la funcion repetida `generar_hash`.
-- `add_framework_governance_columns`: agrega columnas de gobierno del dato.
-- `build_layer_metadata`: genera la estructura de `03_Metadata.xlsx`.
-- `build_data_dictionary`: genera la estructura de `04_Diccionario_Datos.xlsx`.
-- `audit_layer_dataset`: resume registros, variables, nulos y duplicados.
-- `quality_indicators`: calcula completitud, nulos, duplicidad y cobertura.
-- `build_layer_framework_artifacts`: produce los artefactos estandarizados de
-  una capa en memoria.
-- `export_layer_framework_artifacts`: exporta esos artefactos fuera de la app.
-
-Ejemplo minimo desde un notebook C01-C07:
-
-```python
-from framework_v7.pipeline.layer_framework import build_layer_framework_artifacts
-
-artifacts = build_layer_framework_artifacts(
-    df,
-    layer_name="C01 - Climatica",
-    layer_code="C01",
-    version="1.0",
-    responsible="Jose Barreto y Juan Riataga",
-    date_column="Fecha",
-    node_column="Nodo",
-)
 ```
 
 ## Experimentos Disponibles
 
-El repositorio mantiene resultados versionados por carpeta de experimento:
+- `Exp01`: clasificacion base sobre `irca`.
+- `Exp01-V3`: version ajustada de clasificacion sobre `irca`.
+- `Exp04`: regresion sobre `VolumenUtilDiarioMasa`.
 
-- `Exp01`: experimento base de clasificacion sobre `irca`.
-- `Exp01-V3`: nueva version de clasificacion sobre `irca`.
-- `Exp04`: experimento de regresion sobre `VolumenUtilDiarioMasa`.
-
-Los artefactos principales se encuentran en:
+Artefactos por experimento:
 
 - `DATA/MACHINE_LEARNING/C13_MACHINE_LEARNING/Transformaciones/<Experimento>/`
 - `DATA/MODELADO/Tensores/<Experimento>/`
@@ -142,30 +128,28 @@ Los artefactos principales se encuentran en:
 
 ## Gobierno De Modelos
 
-El notebook `NOTEBOOKS/C17_GOBIERNO_MODELOS/FW7_C17_Gobierno_modelos.ipynb`
-consolida la memoria de gobierno para los modelos del framework. La app expone
-esta informacion en la vista `Gobierno de modelos`, incluyendo:
+La vista `Gobierno de modelos` presenta el control operativo de los modelos:
 
 - Modelos gobernados: `Exp01-V3` para `irca` y `Exp04` para
   `VolumenUtilDiarioMasa`.
 - Identificacion y versionamiento del modelo de referencia.
-- Trazabilidad de artefactos entre C09-C17.
+- Trazabilidad entre datos, transformaciones, tensores, modelos, predicciones e
+  interpretacion.
 - Arquitectura registrada del modelo LSTM.
-- Estado de evidencias, riesgos, controles y matriz de uso seguro.
+- Riesgos, controles, estado de seguimiento y matriz de uso seguro.
 
-## Diseno Experimental
+## Prediccion Live
 
-`DATA/DISENO_EXPERIMENTAL` define la planeacion de experimentos del framework:
+La app incluye un simulador interactivo basado en un modelo liviano entrenado al
+vuelo sobre el dataset maestro. Permite:
 
-- `catalogo_experimentos.csv`
-- `configuracion_experimentos.csv`
-- `variables_predictoras.csv`
-- `estado_experimentos.csv`
-- `criterios_clasificacion.csv`
-- `criterios_regresion.csv`
+- Ajustar variables por capa mediante controles en pantalla.
+- Comparar el escenario editado contra la mediana historica.
+- Consultar variables con mayor influencia en el baseline.
+- Cargar archivos CSV/Excel y descargar predicciones generadas.
 
-La etapa de diseno conecta preguntas de investigacion, variables objetivo,
-tipo de problema, ventana temporal, horizonte predictivo y modelo.
+Este simulador es una herramienta exploratoria para analisis de escenarios. Los
+modelos entrenados y sus artefactos siguen disponibles en `DATA/MODELADO`.
 
 ## Ejecucion Por Consola
 
@@ -175,42 +159,31 @@ Instalar dependencias:
 pip install -r requirements.txt
 ```
 
-Validar el proyecto completo:
+Validar el proyecto:
 
 ```bash
 python main.py
 ```
 
-Validar solo el pipeline modular de notebooks:
+Validar solo el pipeline modular:
 
 ```bash
 set PYTHONPATH=src
 python -m framework_v7.pipeline.main
 ```
 
-Instalar como paquete local para importar desde notebooks:
+Instalar como paquete local:
 
 ```bash
 pip install -e .
 ```
 
-## Aplicacion Streamlit
-
-La app permite consultar los resultados sin ejecutar los notebooks:
-
-```bash
-streamlit run app.py
-```
-
-La modularizacion de notebooks vive en `src/framework_v7/pipeline` y es
-independiente de `app.py`.
-
 ## Convenciones De Desarrollo
 
-- Mantener notebooks como memoria metodologica.
-- Mover funciones reutilizables a `src/framework_v7/pipeline`.
-- Guardar resultados consolidados en `DATA`.
-- Evitar logica pesada dentro de `app.py`.
+- Mantener `app.py` como punto de entrada de Streamlit.
+- Centralizar logica reusable en `src/framework_v7/pipeline`.
+- Guardar datasets y resultados consolidados en `DATA`.
+- Mantener rutas canonicas en `src/framework_v7/paths.py`.
 - Ejecutar `python main.py` antes de publicar cambios.
 - Documentar funciones con docstrings de estilo Google o Numpy.
 

@@ -1,32 +1,42 @@
-# DISEÑO EXPERIMENTAL DEL FRAMEWORK V7
+# DISENO EXPERIMENTAL
 
-Este directorio contiene la configuración oficial utilizada por el Framework para planear, ejecutar y evaluar experimentos de ciencia de datos aplicados a la gestión hídrica del Río Bogotá.
+Esta carpeta contiene la configuracion que usa FRAMEWORK V7 para registrar,
+comparar y consultar experimentos predictivos desde notebooks, scripts y la app
+Streamlit.
 
-## Propósito
+## Proposito
 
-El diseño experimental conecta las preguntas de investigación con variables objetivo, variables predictoras, tipo de problema, ventana temporal, horizonte predictivo, modelo y criterios de evaluación. Los archivos de esta carpeta son consumidos por los notebooks C13, C14, C15 y C16, así como por la app Streamlit.
+El diseno experimental conecta variables objetivo, variables predictoras, tipo
+de problema, ventana temporal, horizonte predictivo, modelo y criterios de
+seguimiento. Los archivos de esta carpeta son consumidos por los notebooks C13,
+C14, C15 y C16, por el pipeline modular y por la vista `Diseno experimental` de
+la aplicacion.
 
 ## Artefactos
 
-- `catalogo_experimentos.csv`: plan experimental de `Exp01` a `Exp08`.
-- `configuracion_experimentos.csv`: parámetros generales de modelado.
+- `catalogo_experimentos.csv`: catalogo de `Exp01` a `Exp08`.
+- `configuracion_experimentos.csv`: parametros generales de modelado.
 - `variables_predictoras.csv`: variables iniciales usadas como entrada.
-- `estado_experimentos.csv`: bitácora de avance y resultados por experimento ejecutado.
-- `criterios_clasificacion.csv`: criterios para interpretar modelos de clasificación.
-- `criterios_regresion.csv`: criterios para interpretar modelos de regresión.
+- `estado_experimentos.csv`: avance y resultados por experimento ejecutado.
+- `criterios_clasificacion.csv`: criterios para leer modelos de clasificacion.
+- `criterios_regresion.csv`: criterios para leer modelos de regresion.
 
-## Experimentos realizados
-
-A la fecha se realizaron tres ejecuciones experimentales:
+## Experimentos Ejecutados
 
 | Experimento | Tipo | Variable objetivo | Estado | Resultado principal |
 |---|---|---|---|---|
-| Exp01 | Clasificación | irca | Ejecutado | Línea base no apta para detectar el objetivo; accuracy 0.8462, precisión 0.0000, recall 0.0000 y F1 0.0000. |
-| Exp01-V3 | Clasificación | irca | Ejecutado | Versión mejorada con capacidad predictiva parcial; accuracy 0.9226, precisión 0.5645, recall 0.7292 y F1 0.6364. |
-| Exp04 | Regresión | VolumenUtilDiarioMasa | Ejecutado | Modelo aceptable para volumen útil; MAE 0.0824, RMSE 0.1470, MAPE 23.8944 y R2 0.7225. |
+| Exp01 | Clasificacion | `irca` | Ejecutado | Linea base de clasificacion; accuracy 0.8462, precision 0.0000, recall 0.0000 y F1 0.0000. |
+| Exp01-V3 | Clasificacion | `irca` | Ejecutado | Version ajustada para IRCA; accuracy 0.9226, precision 0.5645, recall 0.7292 y F1 0.6364. |
+| Exp04 | Regresion | `VolumenUtilDiarioMasa` | Ejecutado | Modelo de volumen util; MAE 0.0824, RMSE 0.1470, MAPE 23.8944 y R2 0.7225. |
 
-## Lectura metodológica
+## Uso En La App
 
-`Exp01` debe leerse como línea base: muestra que una exactitud global alta no garantiza capacidad de detección cuando las clases están desbalanceadas. `Exp01-V3` documenta la mejora del experimento IRCA y permite justificar iteración metodológica. `Exp04` amplía el framework hacia regresión y evalúa disponibilidad hídrica mediante `VolumenUtilDiarioMasa`.
+La vista `Diseno experimental` permite:
 
-Los experimentos pendientes (`Exp02`, `Exp03`, `Exp05`, `Exp06`, `Exp07` y `Exp08`) quedan como agenda de ampliación para evaluar calidad general del agua, nivel mínimo, contaminación orgánica/química, oxígeno disuelto y pH.
+- Consultar catalogo, configuracion y estado de experimentos.
+- Revisar variables predictoras disponibles.
+- Comparar criterios de clasificacion y regresion.
+- Descargar datasets de configuracion en formato CSV.
+
+Los experimentos pendientes (`Exp02`, `Exp03`, `Exp05`, `Exp06`, `Exp07` y
+`Exp08`) quedan disponibles para futuras iteraciones del producto.
