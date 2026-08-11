@@ -3,9 +3,9 @@ Experimento,Exp01
 Dominio,Gestión Hídrica
 Variable Objetivo,irca
 Modelo,modelo_Exp01_irca.keras
-Metodo Transformacion,Escalado MinMax
+Metodo Transformacion,RobustScaler
 Ventana,12
 Variables Predictoras,8
 Registros Procesados,528
 Predicciones Generadas,517
-Fecha Ejecucion,2026-07-28 17:06
+Fecha Ejecucion,2026-08-11 17:25

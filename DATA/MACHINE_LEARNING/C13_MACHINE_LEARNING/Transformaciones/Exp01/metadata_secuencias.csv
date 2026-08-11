@@ -1,5 +1,8 @@
 ﻿Parametro,Valor
+Experimento,Exp01
 Dominio,Gestión Hídrica
+Tipo Problema,Clasificación
+Modelo,LSTM
 Variable Objetivo,irca
 Ventana,12
 Horizonte,1

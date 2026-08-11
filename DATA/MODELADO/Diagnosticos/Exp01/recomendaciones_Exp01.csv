@@ -1,10 +1,10 @@
 ﻿Recomendacion
-"• Aplicar balanceo de clases (SMOTE, Oversampling o Undersampling)."
+"• Aplicar técnicas de balanceo de clases (SMOTE, Oversampling o Undersampling)."
 • Entrenar nuevamente utilizando class_weight.
-• Ajustar el umbral de decisión diferente de 0.50.
+• Ajustar el umbral de decisión a un valor diferente de 0.50.
 • Revisar la selección de variables predictoras.
 • Realizar búsqueda de hiperparámetros (Grid Search o Random Search).
-• El conjunto presenta desbalance de clases; utilizar técnicas de balanceo antes del entrenamiento.
+• El conjunto presenta desbalance de clases; aplicar técnicas de balanceo antes del entrenamiento.
 "• Comparar el desempeño del modelo LSTM con Random Forest, XGBoost y Redes Dense."
 • Evaluar el modelo utilizando validación cruzada temporal.
 • Documentar todos los experimentos para garantizar la reproducibilidad.

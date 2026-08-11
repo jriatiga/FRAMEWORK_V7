@@ -1,0 +1,10 @@
+﻿Parametro,Valor
+Experimento,Exp01
+Dominio,Gestión Hídrica
+Variable Objetivo,irca
+Ventana Temporal,12
+Horizonte,1
+Variables Predictoras,8
+Observaciones,528
+Número de Secuencias,516
+Método de Transformación,RobustScaler
