@@ -12,6 +12,79 @@ from framework_v7.paths import EVALUATIONS_DIR
 from .utils import artifact_inventory, discover_experiments, read_key_value_table, read_table
 
 
+TRANSFORMATIONS_RAW_BASE_URL = (
+    "https://raw.githubusercontent.com/jriatiga/FRAMEWORK_V7/refs/heads/main/"
+    "DATA/MACHINE_LEARNING/C13_MACHINE_LEARNING/Transformaciones"
+)
+
+
+def experiment_candidates(experiment: str) -> list[str]:
+    """Return fallback experiment identifiers for versioned artifacts.
+
+    Args:
+        experiment (str): Experiment identifier, for example ``Exp01-V3``.
+
+    Returns:
+        list[str]: Ordered candidates, starting with the requested experiment
+        and then the base experiment when a version suffix exists.
+    """
+
+    candidates = [experiment]
+    if "-" in experiment:
+        base_experiment = experiment.split("-")[0]
+        if base_experiment not in candidates:
+            candidates.append(base_experiment)
+    return candidates
+
+
+def transformation_artifact_urls(
+    experiment: str,
+    artifact_name: str,
+    base_url: str = TRANSFORMATIONS_RAW_BASE_URL,
+) -> list[str]:
+    """Build candidate raw GitHub URLs for a transformation artifact.
+
+    Args:
+        experiment (str): Experiment identifier.
+        artifact_name (str): Artifact file name, such as
+            ``dataset_machine_learning_transformado.parquet`` or
+            ``scaler.pkl``.
+        base_url (str): Raw GitHub URL for the transformations directory.
+
+    Returns:
+        list[str]: Ordered candidate URLs following the C15 fallback strategy.
+    """
+
+    root = base_url.rstrip("/")
+    return [f"{root}/{candidate}/{artifact_name}" for candidate in experiment_candidates(experiment)]
+
+
+def transformed_dataset_urls(experiment: str) -> list[str]:
+    """Build candidate URLs for the transformed ML dataset.
+
+    Args:
+        experiment (str): Experiment identifier.
+
+    Returns:
+        list[str]: Candidate raw GitHub URLs.
+    """
+
+    return transformation_artifact_urls(experiment, "dataset_machine_learning_transformado.parquet")
+
+
+def scaler_urls(experiment: str) -> list[str]:
+    """Build candidate URLs for the fitted scaler artifact.
+
+    Args:
+        experiment (str): Experiment identifier.
+
+    Returns:
+        list[str]: Candidate raw GitHub URLs.
+    """
+
+    return transformation_artifact_urls(experiment, "scaler.pkl")
+
+
 def classification_metrics(y_true: list[int] | np.ndarray, y_pred: list[int] | np.ndarray) -> pd.DataFrame:
     """Compute binary-classification metrics without external dependencies.
 

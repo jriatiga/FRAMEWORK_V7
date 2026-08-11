@@ -16,6 +16,63 @@ TRANSFORMATIONS_DIR = MACHINE_LEARNING_DIR / "Transformaciones"
 DIAGNOSTIC_DIR = MACHINE_LEARNING_DIR / "Diagnostico"
 
 
+def preprocessing_recommendation(values: pd.Series, skewness: float) -> str:
+    """Recommend a preprocessing action for a numeric variable.
+
+    Args:
+        values (pd.Series): Values of the variable being diagnosed.
+        skewness (float): Skewness value calculated for the variable.
+
+    Returns:
+        str: Human-readable preprocessing recommendation.
+    """
+
+    if values.nunique(dropna=True) <= 2:
+        return "Variable binaria. No requiere transformacion."
+    if abs(skewness) < 0.5:
+        return "No requiere transformacion."
+    if abs(skewness) < 1:
+        return "Evaluar estandarizacion."
+    return "Considerar escalamiento robusto."
+
+
+def coverage_level(value: float) -> str:
+    """Classify a percentage of coverage into a qualitative level.
+
+    Args:
+        value (float): Coverage percentage.
+
+    Returns:
+        str: Coverage label.
+    """
+
+    if value >= 90:
+        return "Excelente"
+    if value >= 70:
+        return "Buena"
+    if value >= 50:
+        return "Aceptable"
+    if value >= 20:
+        return "Baja"
+    return "Insuficiente"
+
+
+def select_transformation_method(asymmetric_variables: int, variables_with_outliers: int = 0) -> str:
+    """Select the transformation family suggested by C13 diagnostics.
+
+    Args:
+        asymmetric_variables (int): Count of variables with relevant skewness.
+        variables_with_outliers (int): Count of variables with outlier alerts.
+
+    Returns:
+        str: Name of the recommended transformation method.
+    """
+
+    if asymmetric_variables >= 2 or variables_with_outliers >= 2:
+        return "RobustScaler"
+    return "StandardScaler"
+
+
 def fit_minmax(df: pd.DataFrame, columns: list[str]) -> pd.DataFrame:
     """Fit min-max scaling parameters for selected columns.
 

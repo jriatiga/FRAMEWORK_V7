@@ -30,6 +30,8 @@ El flujo sigue una anatomia por capas y etapas:
 5. C14 entrena o registra modelos y tensores por experimento.
 6. C15 exporta predicciones y metadata de evaluacion.
 7. C16 interpreta resultados y traduce metricas en lectura sistemica.
+8. C17 documenta gobierno de modelos: versionamiento, trazabilidad, riesgos,
+   controles y uso seguro de los modelos.
 
 ## Estructura
 
@@ -77,6 +79,8 @@ Colab, scripts o pruebas sin repetir celdas largas.
 - `modeling.py`: configuracion, tensores, registros y diagnosticos C14.
 - `evaluation.py`: metricas, predicciones y recomendaciones C15.
 - `interpretation.py`: resumenes, interpretacion y lectura sistemica C16.
+- `model_governance.py`: gobierno de modelos C17, trazabilidad, matriz de
+  riesgos y evidencia de ciclo de vida.
 - `experiment_design.py`: diseno experimental y plan de experimentos.
 - `main.py`: validacion ligera del pipeline modular.
 
@@ -135,6 +139,19 @@ Los artefactos principales se encuentran en:
 - `DATA/MODELADO/Diagnosticos/<Experimento>/`
 - `DATA/EVALUACIONES/<Experimento>/`
 - `DATA/INTERPRETACION_RESULTADOS/<Experimento>/`
+
+## Gobierno De Modelos
+
+El notebook `NOTEBOOKS/C17_GOBIERNO_MODELOS/FW7_C17_Gobierno_modelos.ipynb`
+consolida la memoria de gobierno para los modelos del framework. La app expone
+esta informacion en la vista `Gobierno de modelos`, incluyendo:
+
+- Modelos gobernados: `Exp01-V3` para `irca` y `Exp04` para
+  `VolumenUtilDiarioMasa`.
+- Identificacion y versionamiento del modelo de referencia.
+- Trazabilidad de artefactos entre C09-C17.
+- Arquitectura registrada del modelo LSTM.
+- Estado de evidencias, riesgos, controles y matriz de uso seguro.
 
 ## Diseno Experimental
 

@@ -14,6 +14,7 @@ from . import (
     layer_framework,
     machine_learning,
     ml_preparation,
+    model_governance,
     modeling,
 )
 
@@ -154,6 +155,24 @@ def run_pipeline_summary(data: ProjectData | None = None) -> pd.DataFrame:
                 "Etapa": "C16",
                 "Modulo": "interpretation.py",
                 "Resultado": f"{len(interpretation_summary)} resumenes de interpretacion consolidados",
+            }
+        )
+
+    governance_summary = model_governance.governance_summary()
+    if not governance_summary.empty:
+        governed_models = governance_summary.loc[
+            governance_summary["Indicador"] == "modelos_gobernados",
+            "Valor",
+        ].iloc[0]
+        governed_risks = governance_summary.loc[
+            governance_summary["Indicador"] == "riesgos_controlados",
+            "Valor",
+        ].iloc[0]
+        rows.append(
+            {
+                "Etapa": "C17",
+                "Modulo": "model_governance.py",
+                "Resultado": f"{governed_models} modelos gobernados y {governed_risks} riesgos controlados",
             }
         )
 

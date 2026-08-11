@@ -22,6 +22,7 @@ from . import (
     live_prediction,
     machine_learning,
     ml_preparation,
+    model_governance,
     modeling,
     utils,
 )
@@ -39,6 +40,7 @@ PIPELINE_MODULES = {
     "C14 - Modelado": modeling,
     "C15 - Evaluacion": evaluation,
     "C16 - Interpretacion": interpretation,
+    "C17 - Gobierno de modelos": model_governance,
     "Diseno experimental": experiment_design,
     "Prediccion live": live_prediction,
     "Utilidades": utils,

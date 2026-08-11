@@ -58,6 +58,18 @@ from .pipeline.live_prediction import (
     irca_risk_label,
     predict_live,
 )
+from .pipeline.model_governance import (
+    governed_models,
+    governance_lifecycle,
+    governance_risk_controls,
+    governance_risk_matrix,
+    governance_status,
+    governance_summary,
+    model_architecture_summary,
+    model_artifact_traceability,
+    notebook_markdown_sections,
+    reference_model_identity,
+)
 from .pipeline.machine_learning import (
     load_sequence_metadata,
     load_transformed_dataset,
@@ -228,6 +240,7 @@ def render_sidebar(data: ProjectData) -> str:
                 "Dashboard",
                 "Experimentos",
                 "Prediccion live",
+                "Gobierno de modelos",
                 "Diseno experimental",
                 "Datasets por capas",
                 "Dataset maestro",
@@ -956,6 +969,132 @@ def render_live_prediction(data: ProjectData) -> None:
                 mime="text/csv",
                 key=f"download_live_predictions_{selected_target}",
             )
+
+
+def render_model_governance() -> None:
+    """Render model-governance information from notebook C17.
+
+    Returns:
+        None.
+    """
+
+    st.subheader("Gobierno de modelos")
+    st.caption(
+        "C17 documenta identificacion, versionamiento, trazabilidad, riesgos "
+        "y controles para los modelos predictivos del framework."
+    )
+
+    summary = governance_summary()
+    summary_map = dict(zip(summary["Indicador"], summary["Valor"]))
+    c1, c2, c3, c4 = st.columns(4)
+    c1.metric("Modelos gobernados", f"{int(summary_map.get('modelos_gobernados', 0)):,}")
+    c2.metric("Artefactos trazados", f"{int(summary_map.get('artefactos_trazados', 0)):,}")
+    c3.metric("Etapas ciclo vida", f"{int(summary_map.get('etapas_ciclo_vida', 0)):,}")
+    c4.metric("Riesgos controlados", f"{int(summary_map.get('riesgos_controlados', 0)):,}")
+
+    tab_summary, tab_models, tab_trace, tab_risks, tab_notebook = st.tabs(
+        ["Resumen", "Modelos", "Trazabilidad", "Riesgos", "Notebook C17"]
+    )
+
+    with tab_summary:
+        left, right = st.columns([1, 1])
+        with left:
+            st.markdown("**Estado de gobierno**")
+            status = governance_status()
+            st.dataframe(status, use_container_width=True, hide_index=True)
+        with right:
+            status_counts = status["Estado"].value_counts().reset_index()
+            status_counts.columns = ["Estado", "Conteo"]
+            fig = px.bar(
+                status_counts,
+                x="Estado",
+                y="Conteo",
+                color="Estado",
+                title="Estado de evidencias y controles",
+            )
+            fig.update_layout(height=390, margin=dict(l=10, r=10, t=55, b=10), showlegend=False)
+            st.plotly_chart(fig, use_container_width=True)
+
+        st.markdown("**Ciclo de vida gobernado**")
+        lifecycle = governance_lifecycle()
+        st.dataframe(lifecycle, use_container_width=True, hide_index=True)
+
+    with tab_models:
+        st.markdown("**Modelos incluidos en C17**")
+        st.dataframe(governed_models(), use_container_width=True, hide_index=True)
+
+        st.markdown("**Identificacion del modelo de referencia**")
+        identity = reference_model_identity()
+        st.dataframe(identity, use_container_width=True, hide_index=True)
+
+        st.markdown("**Arquitectura registrada**")
+        architecture = model_architecture_summary()
+        fig = px.bar(
+            architecture,
+            x="Tipo",
+            y="Parametros",
+            text="Parametros",
+            title="Parametros por capa del modelo LSTM de referencia",
+        )
+        fig.update_layout(height=360, margin=dict(l=10, r=10, t=55, b=10))
+        st.plotly_chart(fig, use_container_width=True)
+        st.dataframe(architecture, use_container_width=True, hide_index=True)
+
+    with tab_trace:
+        st.markdown("**Matriz de trazabilidad de artefactos**")
+        artifacts = model_artifact_traceability()
+        st.dataframe(artifacts, use_container_width=True, hide_index=True)
+
+        artifact_counts = artifacts["Categoria"].value_counts().reset_index()
+        artifact_counts.columns = ["Categoria", "Artefactos"]
+        fig = px.bar(
+            artifact_counts,
+            x="Categoria",
+            y="Artefactos",
+            color="Categoria",
+            title="Artefactos trazados por categoria",
+        )
+        fig.update_layout(height=390, margin=dict(l=10, r=10, t=55, b=10), showlegend=False)
+        st.plotly_chart(fig, use_container_width=True)
+
+    with tab_risks:
+        st.markdown("**Riesgos y controles de gobierno**")
+        risk_controls = governance_risk_controls()
+        st.dataframe(risk_controls, use_container_width=True, hide_index=True)
+
+        st.markdown("**Matriz de riesgo**")
+        risk_matrix = governance_risk_matrix()
+        risk_order = {"Baja": 1, "Baja/Media": 2, "Media": 3, "Alto": 4, "Medio": 3}
+        chart = risk_matrix.copy()
+        chart["Impacto_valor"] = chart["Impacto"].map(risk_order).fillna(0)
+        chart["Control_valor"] = chart["Nivel_control"].map(risk_order).fillna(0)
+        chart["Tamano"] = 14
+        fig = px.scatter(
+            chart,
+            x="Impacto_valor",
+            y="Control_valor",
+            color="Probabilidad",
+            size="Tamano",
+            hover_name="Riesgo",
+            title="Relacion impacto-control por riesgo",
+        )
+        fig.update_layout(
+            height=430,
+            margin=dict(l=10, r=10, t=55, b=10),
+            xaxis_title="Impacto",
+            yaxis_title="Nivel de control",
+        )
+        st.plotly_chart(fig, use_container_width=True)
+        st.dataframe(risk_matrix, use_container_width=True, hide_index=True)
+
+    with tab_notebook:
+        sections = notebook_markdown_sections()
+        if sections.empty:
+            render_missing_file(NOTEBOOKS_DIR / "C17_GOBIERNO_MODELOS" / "FW7_C17_Gobierno_modelos.ipynb")
+        else:
+            selected_section = st.selectbox("Seccion C17", sections["Seccion"].tolist())
+            content = sections.loc[sections["Seccion"] == selected_section, "Contenido"].iloc[0]
+            st.markdown(content)
 
 
 def render_experiment_design(data: ProjectData) -> None:

@@ -37,14 +37,15 @@ DIAGNOSTIC_PATH = (
     / "MACHINE_LEARNING"
     / "C13_MACHINE_LEARNING"
     / "Diagnostico"
+    / "Exp01"
     / "diagnostico_estadistico_ml.csv"
 )
 MASTER_PATH = MASTER_DIR / "C09_MASTER" / "Dataset_Maestro_Framework_v03_Con_Imputaciones.csv"
 COVERAGE_PATH = MASTER_DIR / "C09_MASTER" / "Dataset_Maestro_Framework_v03_Resumen_Cobertura_Variables.csv"
 MODEL_DIAGNOSTIC_PATH = MODELING_DIR / "Diagnosticos" / "Exp01" / "diagnostico_modelo_Exp01.csv"
 MODEL_RECOMMENDATIONS_PATH = MODELING_DIR / "Diagnosticos" / "Exp01" / "recomendaciones_Exp01.csv"
-MODEL_ACCURACY_IMAGE_PATH = MODELING_DIR / "Metricas" / "Exp01" / "accuracy_experimento.png"
-MODEL_LOSS_IMAGE_PATH = MODELING_DIR / "Metricas" / "Exp01" / "loss_experimento.png"
+MODEL_ACCURACY_IMAGE_PATH = MODELING_DIR / "Metricas" / "Exp01" / "accuracy_Exp01.png"
+MODEL_LOSS_IMAGE_PATH = MODELING_DIR / "Metricas" / "Exp01" / "loss_Exp01.png"
 MODEL_CARDS_DIR = FRAMEWORK_STREAMLIT_DIR / "model_cards"
 
 
